@@ -1,1 +1,0 @@
-# Super-script-para-jogo-de-tiro
