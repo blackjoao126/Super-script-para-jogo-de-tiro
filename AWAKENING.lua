@@ -1,6 +1,6 @@
 --[[
     ╔════════════════════════════════════════════════════════════╗
-    ║       PROJECT: SYSTEM: AWAKENING (V1.9.2 TOTAL)            ║
+    ║       PROJECT: SHADOWCLIENT v2.7.1 (TOTAL OVERHAUL)       ║
     ║       STUDIO: SHADOW PROTOCOL LABS                         ║
     ║------------------------------------------------------------║
     ║       LEAD DEVELOPER: ENZO CAVALCANTI                      ║
@@ -24,14 +24,17 @@ getgenv().SystemConfig = {
     TeamCheck = true,
     HighlightEnabled = false,
     DotEnabled = false,
-    MicroHpEnabled = false,   -- [ADICIONADO]: Controle individual da vida nos pés
-    MicroDistEnabled = false, -- [ADICIONADO]: Controle individual da distância nos pés
+    MicroHpEnabled = false,   
+    MicroDistEnabled = false, 
     FullBright = false,
     NoShadows = false,
     ClarezaMod = false,
     ShowFPS = false,
     ShowPlayers = false
 }
+
+local NoClipAtivo = false
+local NoClipConnection = nil
 
 local OriginalSettings = {
     Ambient = Lighting.Ambient,
@@ -43,7 +46,7 @@ local OriginalSettings = {
     Exposure = Lighting.ExposureCompensation
 }
 
---// [SISTEMA DE INTERFACE: TAGS E BOTÃO ELITE]
+--// [SISTEMA DE INTERFACE: TAGS E BOTÃO ELITE NEON]
 local ScreenGui = Instance.new("ScreenGui", CoreGui)
 local TagContainer = Instance.new("Frame", ScreenGui)
 TagContainer.Size = UDim2.new(0, 60, 0, 50) 
@@ -54,51 +57,60 @@ UIList.Padding = UDim.new(0, 3)
 
 local function CreateTag(color)
     local f = Instance.new("Frame", TagContainer)
-    f.Size = UDim2.new(0, 70, 0, 16) 
-    f.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
-    f.BackgroundTransparency = 0.5
+    f.Size = UDim2.new(0, 75, 0, 18) 
+    f.BackgroundColor3 = Color3.fromRGB(15, 18, 28)
+    f.BackgroundTransparency = 0.2
     f.Visible = false
-    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 4)
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 5)
+    
+    local stroke = Instance.new("UIStroke", f)
+    stroke.Thickness = 1
+    stroke.Color = color
+    stroke.Transparency = 0.4
+    
     local l = Instance.new("TextLabel", f)
     l.Size = UDim2.new(1, 0, 1, 0)
     l.BackgroundTransparency = 1
-    l.TextColor3 = color
+    l.TextColor3 = Color3.fromRGB(255, 255, 255)
     l.TextSize = 10
     l.Font = Enum.Font.GothamBold
     return f, l
 end
 
-local fpsF, fpsL = CreateTag(Color3.fromRGB(0, 255, 120))
-local countF, countL = CreateTag(Color3.fromRGB(255, 255, 0))
+local fpsF, fpsL = CreateTag(Color3.fromRGB(0, 240, 255))
+local countF, countL = CreateTag(Color3.fromRGB(255, 0, 120))
 
--- Botão Flutuante Elite
+-- Botão Flutuante Elite (Estilo Cyberpunk Avançado)
 local FloatingBtn = Instance.new("TextButton", ScreenGui)
 FloatingBtn.Visible = false 
-FloatingBtn.Size = UDim2.new(0, 65, 0, 35)
+FloatingBtn.Size = UDim2.new(0, 70, 0, 38)
 FloatingBtn.Position = UDim2.new(0.1, 0, 0.5, 0)
-FloatingBtn.BackgroundColor3 = Color3.fromRGB(15, 23, 35)
-FloatingBtn.Text = "OFF"
-FloatingBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
+FloatingBtn.BackgroundColor3 = Color3.fromRGB(11, 14, 24)
+FloatingBtn.Text = "⚡ OFF"
+FloatingBtn.TextColor3 = Color3.fromRGB(130, 140, 160)
 FloatingBtn.Font = Enum.Font.GothamBold
-FloatingBtn.TextSize = 14
+FloatingBtn.TextSize = 13
 FloatingBtn.Draggable = true
 FloatingBtn.Active = true
-Instance.new("UICorner", FloatingBtn).CornerRadius = UDim.new(0, 8)
+
+local BtnCorner = Instance.new("UICorner", FloatingBtn)
+BtnCorner.CornerRadius = UDim.new(0, 10)
+
 local Stroke = Instance.new("UIStroke", FloatingBtn)
 Stroke.Thickness = 2
-Stroke.Color = Color3.fromRGB(40, 50, 70)
+Stroke.Color = Color3.fromRGB(35, 42, 65)
 
 local function UpdateBtnVisual(active)
     if active then
-        TweenService:Create(FloatingBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(20, 35, 60)}):Play()
-        TweenService:Create(Stroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(57, 172, 231)}):Play()
+        TweenService:Create(FloatingBtn, TweenInfo.new(0.25), {BackgroundColor3 = Color3.fromRGB(16, 28, 48)}):Play()
+        TweenService:Create(Stroke, TweenInfo.new(0.25), {Color = Color3.fromRGB(0, 240, 255)}):Play()
         FloatingBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        FloatingBtn.Text = "ON"
+        FloatingBtn.Text = "⚡ ON"
     else
-        TweenService:Create(FloatingBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(15, 23, 35)}):Play()
-        TweenService:Create(Stroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(40, 50, 70)}):Play()
-        FloatingBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
-        FloatingBtn.Text = "OFF"
+        TweenService:Create(FloatingBtn, TweenInfo.new(0.25), {BackgroundColor3 = Color3.fromRGB(11, 14, 24)}):Play()
+        TweenService:Create(Stroke, TweenInfo.new(0.25), {Color = Color3.fromRGB(35, 42, 65)}):Play()
+        FloatingBtn.TextColor3 = Color3.fromRGB(130, 140, 160)
+        FloatingBtn.Text = "⚡ OFF"
     end
 end
 
@@ -180,24 +192,27 @@ local function CreateMicroDisplay(char)
     return billboard
 end
 
---// [INTERFACE RAYFIELD]
+--// [INTERFACE RAYFIELD - TEXTOS ATUALIZADOS]
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "👑 SYSTEM: AWAKENING | v1.9.2",
-   LoadingTitle = "SHADOW PROTOCOL LABS",
-   LoadingSubtitle = "By: Enzo Cavalcanti",
+   Name = "👑 SHADOWCLIENT v2.7.1",
+   LoadingTitle = "SHADOWCLIENT v2.7.1 está iniciando meu rei...",
+   LoadingSubtitle = "SHADOW PROTOCOL LABS",
    ConfigurationSaving = { Enabled = false },
-   Theme = "DarkBlue" 
+   Theme = "Custom"
 })
+
+Window.BackgroundColor = Color3.fromRGB(11, 13, 23)
 
 local CombatTab = Window:CreateTab("🔫 Combate", 10734950020)
 local VisualTab = Window:CreateTab("👁️ Visual", 10734951477)
 local LightTab = Window:CreateTab("💡 Iluminação", 10734951477)
+local MovimentTab = Window:CreateTab("🧱 Movimento", 4483362458) 
 local StatusTab = Window:CreateTab("📊 Monitor", 4483362458)
 
 CombatTab:CreateToggle({ 
-    Name = "Ativar Mira", 
+    Name = "Ativar Mira Assistida", 
     CurrentValue = false, 
     Callback = function(v) 
         getgenv().SystemConfig.MiraAtiva = v 
@@ -205,16 +220,15 @@ CombatTab:CreateToggle({
         UpdateBtnVisual(v)
     end 
 })
-CombatTab:CreateSlider({ Name = "Suavidade", Range = {0.1, 1}, Increment = 0.05, CurrentValue = 0.35, Callback = function(v) getgenv().SystemConfig.Smoothness = v end })
+CombatTab:CreateSlider({ Name = "Suavidade de Resposta", Range = {0.1, 1}, Increment = 0.05, CurrentValue = 0.35, Callback = function(v) getgenv().SystemConfig.Smoothness = v end })
 
--- [BOTÕES SEPARADOS NA ABA VISUAL]
-VisualTab:CreateToggle({ Name = "Ativar Raio-X", CurrentValue = false, Callback = function(v) getgenv().SystemConfig.HighlightEnabled = v end })
-VisualTab:CreateToggle({ Name = "Ponto na Cabeça", CurrentValue = false, Callback = function(v) getgenv().SystemConfig.DotEnabled = v end })
-VisualTab:CreateToggle({ Name = "Micro-HUD: Vida nos Pés", CurrentValue = false, Callback = function(v) getgenv().SystemConfig.MicroHpEnabled = v end }) -- Botão Vida
-VisualTab:CreateToggle({ Name = "Micro-HUD: Distância nos Pés", CurrentValue = false, Callback = function(v) getgenv().SystemConfig.MicroDistEnabled = v end }) -- Botão Distância
+VisualTab:CreateToggle({ Name = "Ativar Scanner Raio-X", CurrentValue = false, Callback = function(v) getgenv().SystemConfig.HighlightEnabled = v end })
+VisualTab:CreateToggle({ Name = "Fixar Ponto na Cabeça", CurrentValue = false, Callback = function(v) getgenv().SystemConfig.DotEnabled = v end })
+VisualTab:CreateToggle({ Name = "Micro-HUD: Exibir Vida nos Pés", CurrentValue = false, Callback = function(v) getgenv().SystemConfig.MicroHpEnabled = v end }) 
+VisualTab:CreateToggle({ Name = "Micro-HUD: Exibir Distância", CurrentValue = false, Callback = function(v) getgenv().SystemConfig.MicroDistEnabled = v end }) 
 
 LightTab:CreateToggle({ 
-    Name = "FullBright", 
+    Name = "Filtro FullBright Ambiência", 
     CurrentValue = false, 
     Callback = function(v) 
         getgenv().SystemConfig.FullBright = v 
@@ -227,16 +241,46 @@ LightTab:CreateToggle({
         end
     end 
 })
-LightTab:CreateToggle({ Name = "Clareza Técnica", CurrentValue = false, Callback = function(v) getgenv().SystemConfig.ClarezaMod = v end })
-LightTab:CreateToggle({ Name = "Remover Sombras", CurrentValue = false, Callback = function(v) Lighting.GlobalShadows = not v end })
+LightTab:CreateToggle({ Name = "Clareza Técnico Aprimorada", CurrentValue = false, Callback = function(v) getgenv().SystemConfig.ClarezaMod = v end })
+LightTab:CreateToggle({ Name = "Otimizar: Remover Sombras", CurrentValue = false, Callback = function(v) Lighting.GlobalShadows = not v end })
 
-StatusTab:CreateToggle({ Name = "Mostrar FPS", CurrentValue = false, Callback = function(v) getgenv().SystemConfig.ShowFPS = v fpsF.Visible = v end })
-StatusTab:CreateToggle({ Name = "Contador Players", CurrentValue = false, Callback = function(v) getgenv().SystemConfig.ShowPlayers = v countF.Visible = v end })
+MovimentTab:CreateToggle({
+    Name = "Ativar Matriz No-Clip",
+    CurrentValue = false,
+    Callback = function(v)
+        NoClipAtivo = v
+        if NoClipAtivo then
+            NoClipConnection = RunService.Stepped:Connect(function()
+                local char = Player.Character
+                if char then
+                    for _, part in ipairs(char:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.CanCollide = false
+                        end
+                    end
+                end
+            end)
+        else
+            if NoClipConnection then
+                NoClipConnection:Disconnect()
+                NoClipConnection = nil
+            end
+        end
+    end
+})
+
+MovimentTab:CreateParagraph({
+    Title = "ℹ️ Informações Globais / Guide", 
+    Content = "🇧🇷 Esta função é útil em mapas que possuem prédios ou casas para você entrar.\n🇺🇸 This function is useful in maps that have buildings or houses for you to enter."
+})
+
+StatusTab:CreateToggle({ Name = "Monitorar Taxa de FPS", CurrentValue = false, Callback = function(v) getgenv().SystemConfig.ShowFPS = v fpsF.Visible = v end })
+StatusTab:CreateToggle({ Name = "Contador Ativo de Players", CurrentValue = false, Callback = function(v) getgenv().SystemConfig.ShowPlayers = v countF.Visible = v end })
 
 --// [LOOP CORE]
 RunService.RenderStepped:Connect(function(dt)
-    if getgenv().SystemConfig.ShowFPS then fpsL.Text = "FPS: " .. math.floor(1/dt) end
-    if getgenv().SystemConfig.ShowPlayers then countL.Text = "P: " .. #Players:GetPlayers() end
+    if getgenv().SystemConfig.ShowFPS then fpsL.Text = " ⚡ FPS: " .. math.floor(1/dt) end
+    if getgenv().SystemConfig.ShowPlayers then countL.Text = " 👥 Players: " .. #Players:GetPlayers() end
 
     if getgenv().SystemConfig.MiraAtiva then
         local target = getTarget()
@@ -266,7 +310,6 @@ RunService.RenderStepped:Connect(function(dt)
             local char = p.Character
             local head = char:FindFirstChild("Head")
             
-            -- [EXECUÇÃO DO SEU VISUAL ORIGINAL: INTACTO]
             if head then
                 local isTeam = (p.Team == Player.Team and Player.Team ~= nil)
                 local statusColor = isTeam and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
@@ -299,20 +342,17 @@ RunService.RenderStepped:Connect(function(dt)
                 dot.Frame.BackgroundColor3 = dotColor
             end
 
-            -- [EXECUÇÃO INDEPENDENTE: MICRO-HUD CONTROLADO POR BOTÕES SEPARADOS]
             local hum = char:FindFirstChildOfClass("Humanoid")
             local root = char:FindFirstChild("HumanoidRootPart")
             if hum and root then
                 local hud = root:FindFirstChild("Aguia_MicroHUD")
                 
-                -- Se qualquer uma das duas opções estiver ativada e o player estiver vivo
                 if (getgenv().SystemConfig.MicroHpEnabled or getgenv().SystemConfig.MicroDistEnabled) and hum.Health > 0 then
                     local currentHud = CreateMicroDisplay(char)
                     if currentHud then
                         local isTeam = (p.Team == Player.Team and Player.Team ~= nil)
                         local teamColor = isTeam and Color3.fromRGB(0, 255, 120) or Color3.fromRGB(255, 50, 50)
                         
-                        -- Controle da Barrinha de Vida
                         if getgenv().SystemConfig.MicroHpEnabled then
                             local healthRatio = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
                             currentHud.BackgroundBar.MainBar.Size = UDim2.new(healthRatio, 0, 1, 0)
@@ -322,7 +362,6 @@ RunService.RenderStepped:Connect(function(dt)
                             currentHud.BackgroundBar.Visible = false
                         end
                         
-                        -- Controle do Texto de Distância
                         if getgenv().SystemConfig.MicroDistEnabled then
                             local distance = math.floor(Player:DistanceFromCharacter(root.Position))
                             currentHud.DistLabel.Text = string.format("%dm", distance)
@@ -335,7 +374,6 @@ RunService.RenderStepped:Connect(function(dt)
                         currentHud.Enabled = true
                     end
                 else
-                    -- Se ambos os botões forem desligados ou o player morrer, apaga o HUD
                     if hud then
                         hud.Enabled = false
                     end
@@ -346,4 +384,27 @@ RunService.RenderStepped:Connect(function(dt)
     end
 end)
 
-Rayfield:Notify({Title = "SHADOW PROTOCOL LABS", Content = "Otimização Concluída! Pronto para dominar, meu rei!", Duration = 5})
+Player.CharacterAdded:Connect(function()
+    task.wait(0.6)
+    if NoClipActive then
+        if NoClipConnection then NoClipConnection:Disconnect() end
+        NoClipConnection = RunService.Stepped:Connect(function()
+            local char = Player.Character
+            if char then
+                for _, part in ipairs(char:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.CanCollide = false
+                    end
+                end
+            end
+        end)
+    end
+end)
+
+--// [NOTIFICAÇÃO DE INICIALIZAÇÃO PERSONALIZADA]
+Rayfield:Notify({
+    Title = "👑 SHADOWCLIENT v2.7.1",
+    Content = "Conectado ao Shadow Protocol Labs. Bem-vindo de volta, meu rei!",
+    Duration = 7,
+    Image = 4483362458
+})
